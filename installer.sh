@@ -1,43 +1,66 @@
 #!/bin/bash
 
 # 설정
-TARGET_DISK="/dev/sda"
+TARGET_DISK="/dev/vda"
 TARGET_MOUNT="/mnt"
-UBUNTU_VERSION="jammy"  # 22.04 LTS
+UBUNTU_VERSION="noble"  # 22.04 LTS
 MIRROR="http://archive.ubuntu.com/ubuntu"
 
 echo "[1/6] 디스크 파티셔닝"
 # 기존 데이터 삭제 (주의!)
 sgdisk --zap-all ${TARGET_DISK}
 
-# 파티션 생성
+# EFI 파티션과 루트 파티션 생성
 parted -s ${TARGET_DISK} mklabel gpt
-parted -s ${TARGET_DISK} mkpart primary 1MiB 100%
-mkfs.ext4 ${TARGET_DISK}1
+parted -s ${TARGET_DISK} mkpart ESP fat32 1MiB 512MiB
+parted -s ${TARGET_DISK} set 1 boot on
+parted -s ${TARGET_DISK} mkpart primary ext4 512MiB 100%
+
+# 파일시스템 생성
+mkfs.vfat -F32 ${TARGET_DISK}1
+mkfs.ext4 ${TARGET_DISK}2
 
 # 마운트
-mount ${TARGET_DISK}1 ${TARGET_MOUNT}
+mount ${TARGET_DISK}2 ${TARGET_MOUNT}
+mkdir -p ${TARGET_MOUNT}/boot/efi
+mount ${TARGET_DISK}1 ${TARGET_MOUNT}/boot/efi
 
 echo "[2/6] debootstrap을 이용한 기본 시스템 설치"
 apt update
 apt install -y debootstrap
+
 debootstrap --arch=amd64 ${UBUNTU_VERSION} ${TARGET_MOUNT} ${MIRROR}
 
 echo "[3/6] fstab 설정"
 cat <<EOF > ${TARGET_MOUNT}/etc/fstab
-UUID=$(blkid -s UUID -o value ${TARGET_DISK}1) / ext4 defaults 0 1
+UUID=$(blkid -s UUID -o value ${TARGET_DISK}2) / ext4 defaults 0 1
+UUID=$(blkid -s UUID -o value ${TARGET_DISK}1) /boot/efi vfat defaults 0 1
 EOF
 
-echo "[4/6] 부트로더 설치"
+echo "[4/6] systemd-boot 설치"
 mount --bind /dev ${TARGET_MOUNT}/dev
 mount --bind /proc ${TARGET_MOUNT}/proc
 mount --bind /sys ${TARGET_MOUNT}/sys
 
 chroot ${TARGET_MOUNT} bash -c "
 apt update
-apt install -y grub-pc linux-generic
-grub-install ${TARGET_DISK}
-update-grub
+apt install -y systemd-boot
+bootctl install
+
+# 부팅 옵션 설정
+mkdir -p /boot/efi/loader/entries
+cat <<BOOT > /boot/efi/loader/entries/ubuntu.conf
+title Ubuntu ${UBUNTU_VERSION}
+linux /vmlinuz
+initrd /initrd.img
+options root=UUID=$(blkid -s UUID -o value ${TARGET_DISK}2) rw quiet splash
+BOOT
+
+# 부트로더 기본 설정
+cat <<LOADER > /boot/efi/loader/loader.conf
+default ubuntu.conf
+timeout 3
+LOADER
 "
 
 echo "[5/6] 사용자 설정"

@@ -24,8 +24,8 @@ mkfs.ext4 ${TARGET_DISK}2
 
 # 마운트
 mount ${TARGET_DISK}2 ${TARGET_MOUNT}
-mkdir -p ${TARGET_MOUNT}/boot/efi
-mount ${TARGET_DISK}1 ${TARGET_MOUNT}/boot/efi
+mkdir -p ${TARGET_MOUNT}/boot
+mount ${TARGET_DISK}1 ${TARGET_MOUNT}/boot
 
 echo "[2/6] debootstrap"
 apt update

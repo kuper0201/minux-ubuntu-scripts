@@ -58,7 +58,6 @@ EOF
 
 apt update
 apt install -y linux-image-generic linux-headers-generic systemd-boot
-update-initramfs -c -k all
 bootctl install
 
 # 부팅 옵션 설정

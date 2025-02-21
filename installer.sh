@@ -6,7 +6,7 @@ TARGET_MOUNT="/mnt"
 UBUNTU_VERSION="noble"  # 22.04 LTS
 MIRROR="http://archive.ubuntu.com/ubuntu"
 
-echo "[1/6] 디스크 파티셔닝"
+echo "[1/6] disk partitioning"
 # 기존 데이터 삭제 (주의!)
 sgdisk --zap-all ${TARGET_DISK}
 
@@ -25,24 +25,35 @@ mount ${TARGET_DISK}2 ${TARGET_MOUNT}
 mkdir -p ${TARGET_MOUNT}/boot/efi
 mount ${TARGET_DISK}1 ${TARGET_MOUNT}/boot/efi
 
-echo "[2/6] debootstrap을 이용한 기본 시스템 설치"
+echo "[2/6] debootstrap"
 apt update
 apt install -y debootstrap
 
 debootstrap --arch=amd64 ${UBUNTU_VERSION} ${TARGET_MOUNT} ${MIRROR}
 
-echo "[3/6] fstab 설정"
+echo "[3/6] setting fstab"
 cat <<EOF > ${TARGET_MOUNT}/etc/fstab
 UUID=$(blkid -s UUID -o value ${TARGET_DISK}2) / ext4 defaults 0 1
 UUID=$(blkid -s UUID -o value ${TARGET_DISK}1) /boot/efi vfat defaults 0 1
 EOF
 
-echo "[4/6] systemd-boot 설치"
+echo "[4/6] install systemd-boot"
 mount --bind /dev ${TARGET_MOUNT}/dev
 mount --bind /proc ${TARGET_MOUNT}/proc
 mount --bind /sys ${TARGET_MOUNT}/sys
 
 chroot ${TARGET_MOUNT} bash -c "
+cat <<EOF > /etc/apt/sources.list
+deb $MIRROR $UBUNTU_VERSION main restricted universe multiverse
+deb-src $MIRROR $UBUNTU_VERSION main restricted universe multiverse
+
+deb $MIRROR $UBUNTU_VERSION-security main restricted universe multiverse
+deb-src $MIRROR $UBUNTU_VERSION-security main restricted universe multiverse
+
+deb $MIRROR $UBUNTU_VERSION-updates main restricted universe multiverse
+deb-src $MIRROR $UBUNTU_VERSION-updates main restricted universe multiverse
+EOF
+
 apt update
 apt install -y systemd-boot
 bootctl install

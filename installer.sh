@@ -6,6 +6,8 @@ TARGET_MOUNT="/mnt"
 UBUNTU_VERSION="noble"  # 22.04 LTS
 MIRROR="http://archive.ubuntu.com/ubuntu"
 
+apt install -y gdisk
+
 echo "[1/6] disk partitioning"
 # 기존 데이터 삭제 (주의!)
 sgdisk --zap-all ${TARGET_DISK}

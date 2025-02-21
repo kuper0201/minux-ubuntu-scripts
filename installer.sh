@@ -57,7 +57,8 @@ deb-src $MIRROR $UBUNTU_VERSION-updates main restricted universe multiverse
 EOF
 
 apt update
-apt install -y systemd-boot
+apt install -y linux-image-generic linux-headers-generic systemd-boot
+update-initramfs -c -k all
 bootctl install
 
 # 부팅 옵션 설정

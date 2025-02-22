@@ -75,6 +75,9 @@ cat <<LOADER > /boot/efi/loader/loader.conf
 default ubuntu.conf
 timeout 3
 LOADER
+
+# 패키지 설치
+apt install -y --no-install-recommends openbox lightdm lightdm-gtk-greeter lxqt-panel
 "
 
 echo "[5/6] 사용자 설정"

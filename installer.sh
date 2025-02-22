@@ -4,7 +4,7 @@
 TARGET_DISK="/dev/vda"
 TARGET_MOUNT="/mnt"
 UBUNTU_VERSION="noble"  # 22.04 LTS
-MIRROR="http://archive.ubuntu.com/ubuntu"
+MIRROR="http://mirror.kakao.com/ubuntu"
 
 apt install -y gdisk
 
@@ -62,8 +62,8 @@ update-initramfs -c -k all
 bootctl install
 
 # 부팅 옵션 설정
-mkdir -p /boot/efi/loader/entries
-cat <<BOOT > /boot/efi/loader/entries/ubuntu.conf
+mkdir -p /boot/loader/entries
+cat <<BOOT > /boot/loader/entries/ubuntu.conf
 title Ubuntu ${UBUNTU_VERSION}
 linux /vmlinuz
 initrd /initrd.img
@@ -71,13 +71,13 @@ options root=UUID=$(blkid -s UUID -o value ${TARGET_DISK}2) rw quiet splash
 BOOT
 
 # 부트로더 기본 설정
-cat <<LOADER > /boot/efi/loader/loader.conf
+cat <<LOADER > /boot/loader/loader.conf
 default ubuntu.conf
 timeout 3
 LOADER
 
 # 패키지 설치
-apt install -y --no-install-recommends openbox lightdm lightdm-gtk-greeter lxqt-panel xorg
+apt install -y --no-install-recommends --no-install-suggests xorg openbox lightdm lightdm-gtk-greeter lxqt-panel xorg
 "
 
 echo "[5/6] 사용자 설정"

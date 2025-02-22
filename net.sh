@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 인터페이스 이름 자동 감지
-IFACE=$(ip route | awk '/default/ {print $5}')
+IFACE=$(ip -o link show | awk -F': ' '!/lo/ {print $2}' | head -n 1)
 
 # 감지된 인터페이스가 없으면 종료
 if [[ -z "$IFACE" ]]; then

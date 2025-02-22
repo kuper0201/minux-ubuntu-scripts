@@ -77,7 +77,7 @@ timeout 3
 LOADER
 
 # 패키지 설치
-apt install -y --no-install-recommends openbox lightdm lightdm-gtk-greeter lxqt-panel
+apt install -y --no-install-recommends openbox lightdm lightdm-gtk-greeter lxqt-panel xorg
 "
 
 echo "[5/6] 사용자 설정"
